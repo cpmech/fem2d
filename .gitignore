@@ -1,0 +1,14 @@
+# vscode data
+.vs
+!.vs/launch.vs.json
+
+# cmake data
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# binary files
+example1
+out/
+build/
