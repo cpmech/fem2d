@@ -7,8 +7,6 @@
 
 #include "laclib.h"
 
-#include "linear_elasticity.h"
-
 using namespace std;
 
 /// @brief Defines the index of a local DOF (0 or 1)
@@ -25,6 +23,12 @@ struct Fem2d {
     /// @brief Simulate linear elastic solid triangles with 3 nodes instead of linear elastic rods with 2nodes
     bool solid_triangle;
 
+    /// @brief If solid_triangle, simulate plane-stress instead of plane-strain
+    bool plane_stress;
+
+    /// @brief Thickness of the plate if plane-stress and solid_triangle (will be set to 1.0 if plane-stress = false)
+    double thickness;
+
     /// @brief Holds the number of nodes = coordinates.size() / 2
     size_t number_of_nodes;
 
@@ -40,8 +44,14 @@ struct Fem2d {
     /// @brief Connectivity 0 1  0 2  1 2  (size = 2 * number_of_elements)
     std::vector<size_t> connectivity;
 
-    /// @brief Properties = E*A (size = number_of_elements)
-    std::vector<double> properties;
+    /// @brief Holds all Young's modulus (size = number_of_elements)
+    std::vector<double> param_young;
+
+    /// @brief Holds all Poisson coefficients (solid_triangle only) (size = number_of_elements)
+    std::vector<double> param_poisson;
+
+    /// @brief Holds all cross-sectional areas (rod element only) (size = number_of_elements)
+    std::vector<double> param_cross_area;
 
     /// @brief Essential (displacement) prescribed? (size = total_ndof)
     std::vector<bool> essential_prescribed;
@@ -52,11 +62,20 @@ struct Fem2d {
     /// @brief Natural (force) boundary conditions (size = total_ndof)
     std::vector<double> natural_boundary_conditions;
 
-    /// @brief Holds the elastic modulus D (used with solid_triangle)
-    std::unique_ptr<Matrix> elastic_modulus;
+    /// @brief Holds the strain-displacement B matrix (4 x 6; used with solid_triangle)
+    std::unique_ptr<Matrix> bb;
 
-    /// @brief Element stiffness matrix (4 x 4)
+    /// @brief Holds the elastic D matrix (4 x 4; used with solid_triangle)
+    std::unique_ptr<Matrix> dd;
+
+    /// @brief Holds the result of transpose(B) * D (6 x 4; used with solid_triangle)
+    std::unique_ptr<Matrix> bb_t_dd;
+
+    /// @brief Element stiffness matrix (6 x 6 if solid_triangle; 4 x 4 otherwise)
     std::unique_ptr<Matrix> kk_element;
+
+    /// @brief maps local to global DOF
+    std::vector<size_t> m;
 
     /// @brief Global displacements (size = total_ndof)
     std::vector<double> uu;
@@ -64,25 +83,34 @@ struct Fem2d {
     /// @brief Right-hand side vector = global forces, corrected for prescribed displacements (size = total_ndof)
     std::vector<double> rhs;
 
-    /// @brief Global stiffness matrix in COO format (nnz = 10 * number_of_elements)
+    /// @brief Global stiffness matrix in COO format (nnz = (10 or 21) * number_of_elements)
     std::unique_ptr<CooMatrix> kk_coo;
 
-    /// @brief Global stiffness matrix in CSR format (nnz = 10 * number_of_elements)
+    /// @brief Global stiffness matrix in CSR format (nnz = (10 or 21) * number_of_elements)
     std::unique_ptr<CsrMatrixMkl> kk_csr;
 
     /// @brief Holds the linear system solver
     std::unique_ptr<SolverDss> lin_sys_solver;
 
     /// @brief Allocates a new Truss2D structure
+    /// @param solid_triangle Plane-stress or plane-strain analysis with triangles instead of frames in 2D
+    /// @param thickness Out-of-plane thickness if solid-triangle and plane-stress
+    /// @param plane_stress If solid-triangle, simulate plane-stress instead of plane-strain
     /// @param coordinates x0 y0  x1 y1  ...  xnn ynn (size = 2 * number_of_nodes)
     /// @param connectivity 0 1 (2)  0 2 (3)  1 2 (4)  (size = (2 or 3) * number_of_elements)
-    /// @param properties E*A (size = number_of_elements)
+    /// @param param_young All Young's modulus (size = number_of_elements)
+    /// @param param_poisson All Poisson coefficients (solid_triangle only) (size = number_of_elements)
+    /// @param param_cross_area All cross-sectional areas (rod element only) (size = number_of_elements)
     /// @param essential_bcs prescribed boundary conditions. maps (node_number,dof_number) => value
     /// @param natural_bcs natural boundary conditions. maps (node_number,dof_number) => value
     inline static std::unique_ptr<Fem2d> make_new(bool solid_triangle,
+                                                  bool plane_stress,
+                                                  double thickness,
                                                   const std::vector<double> &coordinates,
                                                   const std::vector<size_t> &connectivity,
-                                                  const std::vector<double> &properties,
+                                                  const std::vector<double> &param_young,
+                                                  const std::vector<double> &param_poisson,
+                                                  const std::vector<double> &param_cross_area,
                                                   const std::map<node_dof_pair_t, double> &essential_bcs,
                                                   const std::map<node_dof_pair_t, double> &natural_bcs) {
 
@@ -123,17 +151,24 @@ struct Fem2d {
 
         return std::unique_ptr<Fem2d>{new Fem2d{
             solid_triangle,
+            plane_stress,
+            plane_stress ? thickness : 1.0,
             number_of_nodes,
             number_of_elements,
             total_ndof,
             coordinates,
             connectivity,
-            properties,
+            param_young,
+            param_poisson,
+            param_cross_area,
             essential_prescribed,
             essential_boundary_conditions,
             natural_boundary_conditions,
-            NULL,
-            Matrix::make_new(4, 4),
+            solid_triangle ? Matrix::make_new(4, 6) : NULL, // bb
+            solid_triangle ? Matrix::make_new(4, 4) : NULL, // dd
+            solid_triangle ? Matrix::make_new(6, 4) : NULL, // bb_t_dd
+            solid_triangle ? Matrix::make_new(6, 6) : Matrix::make_new(4, 4),
+            std::vector<size_t>(solid_triangle ? 6 : 4),
             std::vector<double>(total_ndof),
             std::vector<double>(total_ndof),
             CooMatrix::make_new(layout, total_ndof, nnz_max),
@@ -142,9 +177,23 @@ struct Fem2d {
         }};
     }
 
+    /// @brief Calculates the element stiffness (Elastic Rod)
+    /// @param e index of element (rod) in 0 <= e < number_of_elements
+    void calculate_element_stiffness_elastic_rod(size_t e);
+
+    /// @brief Calculates the element stiffness (Solid Triangle)
+    /// @param e index of element (rod) in 0 <= e < number_of_elements
+    void calculate_element_stiffness_solid_triangle(size_t e);
+
     /// @brief Calculates the element stiffness
     /// @param e index of element (rod) in 0 <= e < number_of_elements
-    void calculate_element_stiffness(size_t e);
+    inline void calculate_element_stiffness(size_t e) {
+        if (solid_triangle) {
+            calculate_element_stiffness_solid_triangle(e);
+        } else {
+            calculate_element_stiffness_elastic_rod(e);
+        }
+    }
 
     /// @brief Calculates the global stiffness
     void calculate_rhs_and_global_stiffness();
