@@ -1,10 +1,13 @@
 #pragma once
 
-#include "laclib.h"
 #include <map>
 #include <memory>
 #include <tuple>
 #include <vector>
+
+#include "laclib.h"
+
+#include "linear_elasticity.h"
 
 using namespace std;
 
@@ -48,6 +51,9 @@ struct Fem2d {
 
     /// @brief Natural (force) boundary conditions (size = total_ndof)
     std::vector<double> natural_boundary_conditions;
+
+    /// @brief Holds the elastic modulus D (used with solid_triangle)
+    std::unique_ptr<Matrix> elastic_modulus;
 
     /// @brief Element stiffness matrix (4 x 4)
     std::unique_ptr<Matrix> kk_element;
@@ -126,6 +132,7 @@ struct Fem2d {
             essential_prescribed,
             essential_boundary_conditions,
             natural_boundary_conditions,
+            NULL,
             Matrix::make_new(4, 4),
             std::vector<double>(total_ndof),
             std::vector<double>(total_ndof),

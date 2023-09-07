@@ -5,6 +5,9 @@ void Fem2d::calculate_element_stiffness(size_t e) {
         throw "cannot calculate element stiffness because the element index is out-of-range";
     }
     if (solid_triangle) {
+        size_t a = connectivity[e * 2];
+        size_t b = connectivity[e * 2 + 1];
+        size_t c = connectivity[e * 2 + 2];
         // TODO
     } else {
         size_t a = connectivity[e * 2];
