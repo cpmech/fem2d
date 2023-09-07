@@ -66,7 +66,7 @@ TEST_CASE("fem2d") {
             map<node_dof_pair_t, double> essential_bcs{};
 
             // allocate truss solver
-            auto truss = Fem2d::make_new(coordinates, connectivity, properties, essential_bcs, natural_bcs);
+            auto truss = Fem2d::make_new(false, coordinates, connectivity, properties, essential_bcs, natural_bcs);
 
             // check element length
             CHECK(equal_scalars_tol(truss->calculate_length(0, 1), 10.0, 1e-15));
@@ -145,7 +145,7 @@ TEST_CASE("fem2d") {
                 {{1, AlongY}, 0.4}};
 
             // allocate truss solver
-            auto truss = Fem2d::make_new(coordinates, connectivity, properties, essential_bcs, natural_bcs);
+            auto truss = Fem2d::make_new(false, coordinates, connectivity, properties, essential_bcs, natural_bcs);
 
             // check boundary condition arrays
             auto correct_ep = vector<bool>{true, true, false, true, false, false};
@@ -246,7 +246,7 @@ TEST_CASE("fem2d") {
         };
 
         // allocate truss solver
-        auto truss = Fem2d::make_new(coordinates, connectivity, properties, essential_bcs, natural_bcs);
+        auto truss = Fem2d::make_new(false, coordinates, connectivity, properties, essential_bcs, natural_bcs);
 
         // check boundary condition arrays
         auto correct_ep = vector<bool>{true, true, false, false, false, false, true, true, false, false};

@@ -19,6 +19,9 @@ typedef std::tuple<size_t, LocalDOF> node_dof_pair_t;
 
 /// @brief Implements a finite element solver for trusses in 2D
 struct Fem2d {
+    /// @brief Simulate linear elastic solid triangles with 3 nodes instead of linear elastic rods with 2nodes
+    bool solid_triangle;
+
     /// @brief Holds the number of nodes = coordinates.size() / 2
     size_t number_of_nodes;
 
@@ -66,26 +69,28 @@ struct Fem2d {
 
     /// @brief Allocates a new Truss2D structure
     /// @param coordinates x0 y0  x1 y1  ...  xnn ynn (size = 2 * number_of_nodes)
-    /// @param connectivity 0 1  0 2  1 2  (size = 2 * number_of_elements)
+    /// @param connectivity 0 1 (2)  0 2 (3)  1 2 (4)  (size = (2 or 3) * number_of_elements)
     /// @param properties E*A (size = number_of_elements)
     /// @param essential_bcs prescribed boundary conditions. maps (node_number,dof_number) => value
     /// @param natural_bcs natural boundary conditions. maps (node_number,dof_number) => value
-    inline static std::unique_ptr<Fem2d> make_new(
-        const std::vector<double> &coordinates,
-        const std::vector<size_t> &connectivity,
-        const std::vector<double> &properties,
-        const std::map<node_dof_pair_t, double> &essential_bcs,
-        const std::map<node_dof_pair_t, double> &natural_bcs) {
+    inline static std::unique_ptr<Fem2d> make_new(bool solid_triangle,
+                                                  const std::vector<double> &coordinates,
+                                                  const std::vector<size_t> &connectivity,
+                                                  const std::vector<double> &properties,
+                                                  const std::map<node_dof_pair_t, double> &essential_bcs,
+                                                  const std::map<node_dof_pair_t, double> &natural_bcs) {
 
+        size_t element_num_node = solid_triangle ? 3 : 2;
         auto number_of_nodes = coordinates.size() / 2;
-        auto number_of_elements = connectivity.size() / 2;
+        auto number_of_elements = connectivity.size() / element_num_node;
         auto total_ndof = 2 * number_of_nodes;
 
-        // The number 10 below corresponds to the number of values in the
+        // The number sum_band below corresponds to the number of values in the
         // element stiffness matrix on the diagonal and above the diagonal (upper triangle)
         // The actual number of non-zeros is less than 10 * number_of_elements, so
         // this could be optimized by doing an assembly first
-        auto nnz_max = 10 * number_of_elements;
+        auto sum_band = solid_triangle ? 21 : 10;
+        auto nnz_max = sum_band * number_of_elements;
 
         auto essential_prescribed = std::vector<bool>(total_ndof, false);
         auto essential_boundary_conditions = std::vector<double>(total_ndof, 0.0);
@@ -111,6 +116,7 @@ struct Fem2d {
         options->positive_definite = true;
 
         return std::unique_ptr<Fem2d>{new Fem2d{
+            solid_triangle,
             number_of_nodes,
             number_of_elements,
             total_ndof,

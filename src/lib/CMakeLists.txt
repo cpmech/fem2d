@@ -1,5 +1,5 @@
 set(TESTS
-    z_test_fem2d
+    z_test_truss2d
 )
 
 foreach(var ${TESTS})

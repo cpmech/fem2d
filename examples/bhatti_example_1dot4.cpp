@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
         0.000000000000000e00, 0.000000000000000e00};   // 3
 
     // solve
-    auto truss = Fem2d::make_new(coordinates, connectivity, properties, essential_bcs, natural_bcs);
+    auto truss = Fem2d::make_new(false, coordinates, connectivity, properties, essential_bcs, natural_bcs);
     truss->solve();
     print_vector("uu", truss->uu);
 
