@@ -135,25 +135,6 @@ struct Fem2d {
         }};
     }
 
-    /// @brief Returns the distance between node a and b
-    /// @param a index of node in 0 <= a < number_of_nodes
-    /// @param b index of node in 0 <= b < number_of_nodes
-    inline double calculate_length(size_t a, size_t b) const {
-        if (a >= coordinates.size()) {
-            throw "cannot calculate the length because the a-th node index is out-of-range";
-        }
-        if (b >= coordinates.size()) {
-            throw "cannot calculate the length because the b-th node index is out-of-range";
-        }
-        auto xa = coordinates[a * 2];
-        auto ya = coordinates[a * 2 + 1];
-        auto xb = coordinates[b * 2];
-        auto yb = coordinates[b * 2 + 1];
-        auto dx = xb - xa;
-        auto dy = yb - ya;
-        return sqrt(dx * dx + dy * dy);
-    }
-
     /// @brief Calculates the element stiffness
     /// @param e index of element (rod) in 0 <= e < number_of_elements
     void calculate_element_stiffness(size_t e);

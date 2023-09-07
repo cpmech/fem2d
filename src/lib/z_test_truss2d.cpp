@@ -68,11 +68,6 @@ TEST_CASE("fem2d") {
             // allocate truss solver
             auto truss = Fem2d::make_new(false, coordinates, connectivity, properties, essential_bcs, natural_bcs);
 
-            // check element length
-            CHECK(equal_scalars_tol(truss->calculate_length(0, 1), 10.0, 1e-15));
-            CHECK(equal_scalars_tol(truss->calculate_length(0, 2), 10.0 * SQRT_2, 1e-15));
-            CHECK(equal_scalars_tol(truss->calculate_length(1, 2), 10.0, 1e-15));
-
             // check element stiffness
             truss->calculate_element_stiffness(0);
             CHECK(equal_scalars_tol(truss->kk_element->get(0, 0), 10.0, 1e-15));
@@ -255,14 +250,6 @@ TEST_CASE("fem2d") {
         CHECK(equal_vectors(truss->essential_prescribed, correct_ep));
         CHECK(equal_vectors_tol(truss->essential_boundary_conditions, correct_ebc, 1e-17));
         CHECK(equal_vectors_tol(truss->natural_boundary_conditions, correct_nbc, 1e-17));
-
-        // check element length
-        CHECK(equal_scalars_tol(truss->calculate_length(0, 1), 192.0, 1e-15));
-        CHECK(equal_scalars_tol(truss->calculate_length(0, 2), 240.0, 1e-15));
-        CHECK(equal_scalars_tol(truss->calculate_length(1, 4), 240.0, 1e-15));
-        CHECK(equal_scalars_tol(truss->calculate_length(2, 3), 240.0, 1e-15));
-        CHECK(equal_scalars_tol(truss->calculate_length(3, 2), 240.0, 1e-15));
-        CHECK(equal_scalars_tol(truss->calculate_length(4, 3), 144.0, 1e-15));
 
         // check element stiffness
         truss->calculate_element_stiffness(0);

@@ -4,37 +4,43 @@ void Fem2d::calculate_element_stiffness(size_t e) {
     if (e >= number_of_elements) {
         throw "cannot calculate element stiffness because the element index is out-of-range";
     }
-    size_t a = connectivity[e * 2];
-    size_t b = connectivity[e * 2 + 1];
-    double l = calculate_length(a, b);
-    auto xa = coordinates[a * 2];
-    auto ya = coordinates[a * 2 + 1];
-    auto xb = coordinates[b * 2];
-    auto yb = coordinates[b * 2 + 1];
-    double c = (xb - xa) / l;
-    double s = (yb - ya) / l;
-    double p = properties[e] / l;
+    if (solid_triangle) {
+        // TODO
+    } else {
+        size_t a = connectivity[e * 2];
+        size_t b = connectivity[e * 2 + 1];
+        double xa = coordinates[a * 2];
+        double ya = coordinates[a * 2 + 1];
+        double xb = coordinates[b * 2];
+        double yb = coordinates[b * 2 + 1];
+        double dx = xb - xa;
+        double dy = yb - ya;
+        double l = sqrt(dx * dx + dy * dy);
+        double c = (xb - xa) / l;
+        double s = (yb - ya) / l;
+        double p = properties[e] / l;
 
-    // computing upper triangle only
-    //      _                   _
-    //     |  c*c c*s -c*c -c*s  | 0
-    // E A |   .  s*s -c*s -s*s  | 1
-    // --- |   .   .   c*c  c*s  | 2
-    //  L  |_  .   .    .   s*s _| 3
-    //         0   1    2    3
-    kk_element->set(0, 0, p * c * c);
-    kk_element->set(0, 1, p * c * s);
-    kk_element->set(0, 2, -p * c * c);
-    kk_element->set(0, 3, -p * c * s);
+        // computing upper triangle only
+        //      _                   _
+        //     |  c*c c*s -c*c -c*s  | 0
+        // E A |   .  s*s -c*s -s*s  | 1
+        // --- |   .   .   c*c  c*s  | 2
+        //  L  |_  .   .    .   s*s _| 3
+        //         0   1    2    3
+        kk_element->set(0, 0, p * c * c);
+        kk_element->set(0, 1, p * c * s);
+        kk_element->set(0, 2, -p * c * c);
+        kk_element->set(0, 3, -p * c * s);
 
-    kk_element->set(1, 1, p * s * s);
-    kk_element->set(1, 2, -p * c * s);
-    kk_element->set(1, 3, -p * s * s);
+        kk_element->set(1, 1, p * s * s);
+        kk_element->set(1, 2, -p * c * s);
+        kk_element->set(1, 3, -p * s * s);
 
-    kk_element->set(2, 2, p * c * c);
-    kk_element->set(2, 3, p * c * s);
+        kk_element->set(2, 2, p * c * c);
+        kk_element->set(2, 3, p * c * s);
 
-    kk_element->set(3, 3, p * s * s);
+        kk_element->set(3, 3, p * s * s);
+    }
 }
 
 void Fem2d::calculate_rhs_and_global_stiffness() {
