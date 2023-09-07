@@ -141,16 +141,16 @@ void Fem2d::calculate_rhs_and_global_stiffness() {
         }
     }
 
-    // local dimension
-    size_t dim = solid_triangle ? 6 : 4;
+    // number of rows = number of columns in the element matrix
+    size_t nrow = solid_triangle ? 6 : 4;
 
     // fix RHS vector and assemble stiffness
     for (size_t e = 0; e < number_of_elements; ++e) {
         calculate_element_stiffness(e);
-        size_t a = connectivity[e * 2];
-        size_t b = connectivity[e * 2 + 1];
         if (solid_triangle) {
-            size_t c = connectivity[e * 2 + 2];
+            size_t a = connectivity[e * 3];
+            size_t b = connectivity[e * 3 + 1];
+            size_t c = connectivity[e * 3 + 2];
             m[0] = a * 2;
             m[1] = a * 2 + 1;
             m[2] = b * 2;
@@ -158,15 +158,17 @@ void Fem2d::calculate_rhs_and_global_stiffness() {
             m[4] = c * 2;
             m[5] = c * 2 + 1;
         } else {
+            size_t a = connectivity[e * 2];
+            size_t b = connectivity[e * 2 + 1];
             m[0] = a * 2;
             m[1] = a * 2 + 1;
             m[2] = b * 2;
             m[3] = b * 2 + 1;
         }
-        for (size_t i = 0; i < dim; ++i) {
+        for (size_t i = 0; i < nrow; ++i) {
             if (!essential_prescribed[m[i]]) {
                 // {rhs1} -= [K12]{u2}, correct RHS
-                for (size_t j = 0; j < dim; ++j) {
+                for (size_t j = 0; j < nrow; ++j) {
                     if (essential_prescribed[m[j]]) {
                         if (j >= i) {
                             rhs[m[i]] -= kk_element->get(i, j) * uu[m[j]];
@@ -177,7 +179,7 @@ void Fem2d::calculate_rhs_and_global_stiffness() {
                     }
                 }
                 // [K11]: assemble upper triangle into global stiffness
-                for (size_t j = i; j < dim; ++j) { // j = i => local upper triangle
+                for (size_t j = i; j < nrow; ++j) { // j = i => local upper triangle
                     if (!essential_prescribed[m[j]]) {
                         if (m[j] >= m[i]) {
                             kk_coo->put(m[i], m[j], kk_element->get(i, j));
