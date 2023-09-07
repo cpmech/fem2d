@@ -1,4 +1,5 @@
 set(TESTS
+    z_test_solid2d
     z_test_truss2d
 )
 

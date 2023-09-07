@@ -12,7 +12,7 @@ using namespace std;
 
 #define _SUBCASE(name) if (false)
 
-TEST_CASE("fem2d") {
+TEST_CASE("truss2d") {
     SUBCASE("three-member truss") {
         // GEOMETRY
         //
