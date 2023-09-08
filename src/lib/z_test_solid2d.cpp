@@ -50,8 +50,6 @@ TEST_CASE("solid2d") {
         auto solid_triangle = true;
         auto plane_stress = true;
         auto thickness = 0.25;
-        auto use_expanded_bdb = false;
-        auto use_expanded_bdb_full = false;
         auto coordinates = vector<double>{
             0.0, 0.0,  // 0
             0.0, 2.0,  // 1
@@ -80,22 +78,7 @@ TEST_CASE("solid2d") {
             {{5, AlongX}, -1.25},
             {{5, AlongY}, -5.0}};
 
-        // allocate fem solver
-        auto fem = Fem2d::make_new(solid_triangle,
-                                   plane_stress,
-                                   thickness,
-                                   use_expanded_bdb,
-                                   use_expanded_bdb_full,
-                                   coordinates,
-                                   connectivity,
-                                   param_young,
-                                   param_poisson,
-                                   param_cross_area,
-                                   essential_bcs,
-                                   natural_bcs);
-
-        // check element stiffness
-        fem->calculate_element_stiffness(0);
+        // correct values
         auto correct_kk0 = Matrix::from_row_major(
             6, 6,
             vector<double>{
@@ -106,9 +89,6 @@ TEST_CASE("solid2d") {
                 0.000000000000000e+00, -5.208333333333334e+02, -6.944444444444445e+02, 5.208333333333334e+02, 6.944444444444445e+02, 0.000000000000000e+00,  // 4
                 -2.604166666666667e+02, 0.000000000000000e+00, 2.604166666666667e+02, -1.736111111111111e+03, 0.000000000000000e+00, 1.736111111111111e+03}  // 5
         );
-        CHECK(equal_vectors_tol(fem->kk_element->data, correct_kk0->data, 1e-12));
-
-        fem->calculate_element_stiffness(1);
         auto correct_kk1 = Matrix::from_row_major(
             6, 6,
             vector<double>{
@@ -119,10 +99,6 @@ TEST_CASE("solid2d") {
                 -3.255208333333334e+02, -5.208333333333334e+02, -2.766927083333334e+02, 3.255208333333333e+02, 6.022135416666667e+02, 1.953125000000000e+02, // 4
                 -2.604166666666667e+02, -1.302083333333333e+02, 6.510416666666666e+01, -1.204427083333333e+03, 1.953125000000000e+02, 1.334635416666667e+03} // 5
         );
-        // fem->kk_element->print();
-        CHECK(equal_vectors_tol(fem->kk_element->data, correct_kk1->data, 1e-12));
-
-        fem->calculate_element_stiffness(2);
         auto correct_kk2 = Matrix::from_row_major(
             6, 6,
             vector<double>{
@@ -133,9 +109,6 @@ TEST_CASE("solid2d") {
                 0.000000000000000e+00, -5.208333333333334e+02, -1.041666666666667e+03, 5.208333333333334e+02, 1.041666666666667e+03, 0.000000000000000e+00,  // 4
                 -2.604166666666667e+02, 0.000000000000000e+00, 2.604166666666667e+02, -2.604166666666667e+03, 0.000000000000000e+00, 2.604166666666667e+03}  // 5
         );
-        CHECK(equal_vectors_tol(fem->kk_element->data, correct_kk2->data, 1e-12));
-
-        fem->calculate_element_stiffness(3);
         auto correct_kk3 = Matrix::from_row_major(
             6, 6,
             vector<double>{
@@ -146,17 +119,6 @@ TEST_CASE("solid2d") {
                 -3.255208333333334e+02, -5.208333333333334e+02, -4.774305555555556e+02, 2.604166666666667e+02, 8.029513888888889e+02, 2.604166666666667e+02, // 4
                 -2.604166666666667e+02, -1.302083333333333e+02, 0.000000000000000e+00, -1.649305555555555e+03, 2.604166666666667e+02, 1.779513888888889e+03} // 5
         );
-        CHECK(equal_vectors_tol(fem->kk_element->data, correct_kk3->data, 1e-12));
-
-        fem->calculate_rhs_and_global_stiffness();
-        auto kk = fem->kk_coo->as_matrix();
-        // kk->print();
-
-        // solve the linear system
-        fem->solve();
-        // print_vector("uu", fem->uu);
-
-        // check solution
         auto correct_uu = vector<double>{
             0.000000000000000e+00, 0.000000000000000e+00,   // 0
             0.000000000000000e+00, 0.000000000000000e+00,   // 1
@@ -164,7 +126,150 @@ TEST_CASE("solid2d") {
             4.727650463081949e-03, -2.473565538172127e-02,  // 3
             -1.313941349422282e-02, -5.549310752960183e-02, // 4
             8.389015766816341e-05, -5.556637423271112e-02}; // 5
-        CHECK(equal_vectors_tol(fem->uu, correct_uu, 1e-15));
+
+        SUBCASE("classical Bᵀ ⋅ D ⋅ B approach") {
+            // allocate fem solver
+            auto use_expanded_bdb = false;
+            auto use_expanded_bdb_full = false;
+            auto fem = Fem2d::make_new(solid_triangle,
+                                       plane_stress,
+                                       thickness,
+                                       use_expanded_bdb,
+                                       use_expanded_bdb_full,
+                                       coordinates,
+                                       connectivity,
+                                       param_young,
+                                       param_poisson,
+                                       param_cross_area,
+                                       essential_bcs,
+                                       natural_bcs);
+
+            // check element stiffness
+            fem->calculate_element_stiffness(0);
+            CHECK(equal_vectors_tol(fem->kk_element->data, correct_kk0->data, 1e-12));
+
+            fem->calculate_element_stiffness(1);
+            // fem->kk_element->print();
+            CHECK(equal_vectors_tol(fem->kk_element->data, correct_kk1->data, 1e-12));
+
+            fem->calculate_element_stiffness(2);
+            CHECK(equal_vectors_tol(fem->kk_element->data, correct_kk2->data, 1e-12));
+
+            fem->calculate_element_stiffness(3);
+            CHECK(equal_vectors_tol(fem->kk_element->data, correct_kk3->data, 1e-12));
+
+            // fem->calculate_rhs_and_global_stiffness();
+            // auto kk = fem->kk_coo->as_matrix();
+            // kk->print();
+
+            // solve the linear system
+            fem->solve();
+            // print_vector("uu", fem->uu);
+
+            // check solution
+            CHECK(equal_vectors_tol(fem->uu, correct_uu, 1e-15));
+        }
+
+        SUBCASE("expanded (full) Bᵀ ⋅ D ⋅ B") {
+            // allocate fem solver
+            auto use_expanded_bdb = false;
+            auto use_expanded_bdb_full = true;
+            auto fem = Fem2d::make_new(solid_triangle,
+                                       plane_stress,
+                                       thickness,
+                                       use_expanded_bdb,
+                                       use_expanded_bdb_full,
+                                       coordinates,
+                                       connectivity,
+                                       param_young,
+                                       param_poisson,
+                                       param_cross_area,
+                                       essential_bcs,
+                                       natural_bcs);
+
+            // check element stiffness
+            fem->calculate_element_stiffness(0);
+            CHECK(equal_vectors_tol(fem->kk_element->data, correct_kk0->data, 1e-12));
+            // fem->kk_element->print();
+
+            fem->calculate_element_stiffness(1);
+            // fem->kk_element->print();
+            CHECK(equal_vectors_tol(fem->kk_element->data, correct_kk1->data, 1e-12));
+
+            fem->calculate_element_stiffness(2);
+            CHECK(equal_vectors_tol(fem->kk_element->data, correct_kk2->data, 1e-12));
+
+            fem->calculate_element_stiffness(3);
+            CHECK(equal_vectors_tol(fem->kk_element->data, correct_kk3->data, 1e-12));
+
+            // solve the linear system
+            fem->solve();
+
+            // check solution
+            CHECK(equal_vectors_tol(fem->uu, correct_uu, 1e-15));
+        }
+
+        SUBCASE("expanded (upper triangle) Bᵀ ⋅ D ⋅ B") {
+            // allocate fem solver
+            auto use_expanded_bdb = true;
+            auto use_expanded_bdb_full = false;
+            auto fem = Fem2d::make_new(solid_triangle,
+                                       plane_stress,
+                                       thickness,
+                                       use_expanded_bdb,
+                                       use_expanded_bdb_full,
+                                       coordinates,
+                                       connectivity,
+                                       param_young,
+                                       param_poisson,
+                                       param_cross_area,
+                                       essential_bcs,
+                                       natural_bcs);
+
+            // check element stiffness
+            fem->calculate_element_stiffness(0);
+            auto kk0_upper = correct_kk0->get_copy();
+            for (size_t i = 1; i < 6; i++) {
+                for (size_t j = 0; j < i; j++) {
+                    kk0_upper->set(i, j, 0.0);
+                }
+            }
+            CHECK(equal_vectors_tol(fem->kk_element->data, kk0_upper->data, 1e-12));
+            fem->kk_element->print();
+
+            fem->calculate_element_stiffness(1);
+            auto kk1_upper = correct_kk1->get_copy();
+            for (size_t i = 1; i < 6; i++) {
+                for (size_t j = 0; j < i; j++) {
+                    kk1_upper->set(i, j, 0.0);
+                }
+            }
+            CHECK(equal_vectors_tol(fem->kk_element->data, kk1_upper->data, 1e-12));
+
+            fem->calculate_element_stiffness(2);
+            auto kk2_upper = correct_kk2->get_copy();
+            for (size_t i = 1; i < 6; i++) {
+                for (size_t j = 0; j < i; j++) {
+                    kk2_upper->set(i, j, 0.0);
+                }
+            }
+            CHECK(equal_vectors_tol(fem->kk_element->data, kk2_upper->data, 1e-12));
+
+            fem->calculate_element_stiffness(3);
+            auto kk3_upper = correct_kk3->get_copy();
+            for (size_t i = 1; i < 6; i++) {
+                for (size_t j = 0; j < i; j++) {
+                    kk3_upper->set(i, j, 0.0);
+                }
+            }
+            CHECK(equal_vectors_tol(fem->kk_element->data, kk3_upper->data, 1e-12));
+
+            // solve the linear system
+            fem->solve();
+
+            // check solution
+            CHECK(equal_vectors_tol(fem->uu, correct_uu, 1e-15));
+        }
     }
 
     SUBCASE("plane-strain domain (Smith's Example 5.2)") {

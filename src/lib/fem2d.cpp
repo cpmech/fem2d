@@ -71,35 +71,78 @@ void Fem2d::calculate_element_stiffness_solid_triangle(size_t e) {
     double r = 2.0 * area;
     double s = r * SQRT_2;
 
-    // element B-matrix (plane-strain and plane-stress)
-    bb->set(0, 0, a0 / r);
-    bb->set(0, 1, 0.0);
-    bb->set(0, 2, a1 / r);
-    bb->set(0, 3, 0.0);
-    bb->set(0, 4, a2 / r);
-    bb->set(0, 5, 0.0);
-    bb->set(1, 0, 0.0);
-    bb->set(1, 1, b0 / r);
-    bb->set(1, 2, 0.0);
-    bb->set(1, 3, b1 / r);
-    bb->set(1, 4, 0.0);
-    bb->set(1, 5, b2 / r);
-    bb->set(2, 0, 0.0);
-    bb->set(2, 1, 0.0);
-    bb->set(2, 2, 0.0);
-    bb->set(2, 3, 0.0);
-    bb->set(2, 4, 0.0);
-    bb->set(2, 5, 0.0);
-    bb->set(3, 0, b0 / s);
-    bb->set(3, 1, a0 / s);
-    bb->set(3, 2, b1 / s);
-    bb->set(3, 3, a1 / s);
-    bb->set(3, 4, b2 / s);
-    bb->set(3, 5, a2 / s);
-
     // K = Bᵀ ⋅ D ⋅ B ⋅ thickness ⋅ area
-    mat_t_mat_mul(bb_t_dd, 1.0, bb, dd);
-    mat_mat_mul(kk_element, thickness * area, bb_t_dd, bb);
+    if (use_expanded_bdb) {
+        gg->set(0, 0, a0 / r);
+        gg->set(0, 1, b0 / r);
+        gg->set(1, 0, a1 / r);
+        gg->set(1, 1, b1 / r);
+        gg->set(2, 0, a2 / r);
+        gg->set(2, 1, b2 / r);
+        double ta = thickness * area;
+        kk_element->fill(0.0);
+        for (size_t m = 0; m < 3; m++) {
+            for (size_t n = 0; n < 3; n++) {
+                if (0 + m * 2 <= 0 + n * 2) {
+                    kk_element->add(0 + m * 2, 0 + n * 2, ta * (gg->get(m, 1) * gg->get(n, 1) * dd->get(3, 3) + s * gg->get(m, 1) * gg->get(n, 0) * dd->get(3, 0) + s * gg->get(m, 0) * gg->get(n, 1) * dd->get(0, 3) + 2.0 * gg->get(m, 0) * gg->get(n, 0) * dd->get(0, 0)) / 2.0);
+                }
+                if (0 + m * 2 <= 1 + n * 2) {
+                    kk_element->add(0 + m * 2, 1 + n * 2, ta * (gg->get(m, 1) * gg->get(n, 0) * dd->get(3, 3) + s * gg->get(m, 1) * gg->get(n, 1) * dd->get(3, 1) + s * gg->get(m, 0) * gg->get(n, 0) * dd->get(0, 3) + 2.0 * gg->get(m, 0) * gg->get(n, 1) * dd->get(0, 1)) / 2.0);
+                }
+                if (1 + m * 2 <= 0 + n * 2) {
+                    kk_element->add(1 + m * 2, 0 + n * 2, ta * (gg->get(m, 0) * gg->get(n, 1) * dd->get(3, 3) + s * gg->get(m, 0) * gg->get(n, 0) * dd->get(3, 0) + s * gg->get(m, 1) * gg->get(n, 1) * dd->get(1, 3) + 2.0 * gg->get(m, 1) * gg->get(n, 0) * dd->get(1, 0)) / 2.0);
+                }
+                if (1 + m * 2 <= 1 + n * 2) {
+                    kk_element->add(1 + m * 2, 1 + n * 2, ta * (gg->get(m, 0) * gg->get(n, 0) * dd->get(3, 3) + s * gg->get(m, 0) * gg->get(n, 1) * dd->get(3, 1) + s * gg->get(m, 1) * gg->get(n, 0) * dd->get(1, 3) + 2.0 * gg->get(m, 1) * gg->get(n, 1) * dd->get(1, 1)) / 2.0);
+                }
+            }
+        }
+    } else if (use_expanded_bdb_full) {
+        gg->set(0, 0, a0 / r);
+        gg->set(0, 1, b0 / r);
+        gg->set(1, 0, a1 / r);
+        gg->set(1, 1, b1 / r);
+        gg->set(2, 0, a2 / r);
+        gg->set(2, 1, b2 / r);
+        double ta = thickness * area;
+        kk_element->fill(0.0);
+        for (size_t m = 0; m < 3; m++) {
+            for (size_t n = 0; n < 3; n++) {
+                kk_element->add(0 + m * 2, 0 + n * 2, ta * (gg->get(m, 1) * gg->get(n, 1) * dd->get(3, 3) + s * gg->get(m, 1) * gg->get(n, 0) * dd->get(3, 0) + s * gg->get(m, 0) * gg->get(n, 1) * dd->get(0, 3) + 2.0 * gg->get(m, 0) * gg->get(n, 0) * dd->get(0, 0)) / 2.0);
+                kk_element->add(0 + m * 2, 1 + n * 2, ta * (gg->get(m, 1) * gg->get(n, 0) * dd->get(3, 3) + s * gg->get(m, 1) * gg->get(n, 1) * dd->get(3, 1) + s * gg->get(m, 0) * gg->get(n, 0) * dd->get(0, 3) + 2.0 * gg->get(m, 0) * gg->get(n, 1) * dd->get(0, 1)) / 2.0);
+                kk_element->add(1 + m * 2, 0 + n * 2, ta * (gg->get(m, 0) * gg->get(n, 1) * dd->get(3, 3) + s * gg->get(m, 0) * gg->get(n, 0) * dd->get(3, 0) + s * gg->get(m, 1) * gg->get(n, 1) * dd->get(1, 3) + 2.0 * gg->get(m, 1) * gg->get(n, 0) * dd->get(1, 0)) / 2.0);
+                kk_element->add(1 + m * 2, 1 + n * 2, ta * (gg->get(m, 0) * gg->get(n, 0) * dd->get(3, 3) + s * gg->get(m, 0) * gg->get(n, 1) * dd->get(3, 1) + s * gg->get(m, 1) * gg->get(n, 0) * dd->get(1, 3) + 2.0 * gg->get(m, 1) * gg->get(n, 1) * dd->get(1, 1)) / 2.0);
+            }
+        }
+    } else {
+        // element B-matrix (plane-strain and plane-stress)
+        bb->set(0, 0, a0 / r);
+        bb->set(0, 1, 0.0);
+        bb->set(0, 2, a1 / r);
+        bb->set(0, 3, 0.0);
+        bb->set(0, 4, a2 / r);
+        bb->set(0, 5, 0.0);
+        bb->set(1, 0, 0.0);
+        bb->set(1, 1, b0 / r);
+        bb->set(1, 2, 0.0);
+        bb->set(1, 3, b1 / r);
+        bb->set(1, 4, 0.0);
+        bb->set(1, 5, b2 / r);
+        bb->set(2, 0, 0.0);
+        bb->set(2, 1, 0.0);
+        bb->set(2, 2, 0.0);
+        bb->set(2, 3, 0.0);
+        bb->set(2, 4, 0.0);
+        bb->set(2, 5, 0.0);
+        bb->set(3, 0, b0 / s);
+        bb->set(3, 1, a0 / s);
+        bb->set(3, 2, b1 / s);
+        bb->set(3, 3, a1 / s);
+        bb->set(3, 4, b2 / s);
+        bb->set(3, 5, a2 / s);
+        mat_t_mat_mul(bb_t_dd, 1.0, bb, dd);
+        mat_mat_mul(kk_element, thickness * area, bb_t_dd, bb);
+    }
 }
 
 void Fem2d::calculate_rhs_and_global_stiffness() {

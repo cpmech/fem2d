@@ -68,7 +68,10 @@ struct Fem2d {
     /// @brief Natural (force) boundary conditions (size = total_ndof)
     std::vector<double> natural_boundary_conditions;
 
-    /// @brief Holds the strain-displacement B matrix (4 x 6; used with solid_triangle)
+    /// @brief Holds the gradient G matrix (3 x 2; used with solid_triangle and expanded_bdb)
+    std::unique_ptr<Matrix> gg;
+
+    /// @brief Holds the strain-displacement B matrix (4 x 6; used with solid_triangle and not expanded_bdb)
     std::unique_ptr<Matrix> bb;
 
     /// @brief Holds the elastic D matrix (4 x 4; used with solid_triangle)
@@ -159,6 +162,8 @@ struct Fem2d {
         options->symmetric = true;
         options->positive_definite = true;
 
+        bool expanded_bdb = use_expanded_bdb || use_expanded_bdb_full;
+
         return std::unique_ptr<Fem2d>{new Fem2d{
             solid_triangle,
             plane_stress,
@@ -176,9 +181,10 @@ struct Fem2d {
             essential_prescribed,
             essential_boundary_conditions,
             natural_boundary_conditions,
-            solid_triangle ? Matrix::make_new(4, 6) : NULL, // bb
-            solid_triangle ? Matrix::make_new(4, 4) : NULL, // dd
-            solid_triangle ? Matrix::make_new(6, 4) : NULL, // bb_t_dd
+            solid_triangle && expanded_bdb ? Matrix::make_new(3, 2) : NULL,  // gg
+            solid_triangle && !expanded_bdb ? Matrix::make_new(4, 6) : NULL, // bb
+            solid_triangle ? Matrix::make_new(4, 4) : NULL,                  // dd
+            solid_triangle ? Matrix::make_new(6, 4) : NULL,                  // bb_t_dd
             solid_triangle ? Matrix::make_new(6, 6) : Matrix::make_new(4, 4),
             std::vector<size_t>(solid_triangle ? 6 : 4),
             std::vector<double>(total_ndof),
