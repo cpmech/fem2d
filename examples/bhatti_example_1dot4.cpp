@@ -49,6 +49,8 @@ int main(int argc, char **argv) {
     auto solid_triangle = false;
     auto plane_stress = false;
     auto thickness = 1.0;
+    auto use_expanded_bdb = false;
+    auto use_expanded_bdb_full = false;
 
     // nodes
     auto coordinates = vector<double>{
@@ -96,6 +98,8 @@ int main(int argc, char **argv) {
     auto truss = Fem2d::make_new(solid_triangle,
                                  plane_stress,
                                  thickness,
+                                 use_expanded_bdb,
+                                 use_expanded_bdb_full,
                                  coordinates,
                                  connectivity,
                                  param_young,

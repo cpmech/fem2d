@@ -29,6 +29,12 @@ struct Fem2d {
     /// @brief Thickness of the plate if plane-stress and solid_triangle (will be set to 1.0 if plane-stress = false)
     double thickness;
 
+    /// @brief Use the (upper triangle) expanded code corresponding to Bᵀ ⋅ D ⋅ B (solid_triangle only)
+    bool use_expanded_bdb;
+
+    /// @brief Use the (full matrix) expanded code corresponding to Bᵀ ⋅ D ⋅ B (solid_triangle only)
+    bool use_expanded_bdb_full;
+
     /// @brief Holds the number of nodes = coordinates.size() / 2
     size_t number_of_nodes;
 
@@ -95,6 +101,8 @@ struct Fem2d {
     /// @brief Allocates a new Truss2D structure
     /// @param solid_triangle Plane-stress or plane-strain analysis with triangles instead of frames in 2D
     /// @param thickness Out-of-plane thickness if solid-triangle and plane-stress
+    /// @param use_expanded_bdb Use the (upper triangle) expanded code corresponding to Bᵀ ⋅ D ⋅ B (solid_triangle only)
+    /// @param use_expanded_bdb_full Use the (full matrix) expanded code corresponding to Bᵀ ⋅ D ⋅ B (solid_triangle only)
     /// @param plane_stress If solid-triangle, simulate plane-stress instead of plane-strain
     /// @param coordinates x0 y0  x1 y1  ...  xnn ynn (size = 2 * number_of_nodes)
     /// @param connectivity 0 1 (2)  0 2 (3)  1 2 (4)  (size = (2 or 3) * number_of_elements)
@@ -106,6 +114,8 @@ struct Fem2d {
     inline static std::unique_ptr<Fem2d> make_new(bool solid_triangle,
                                                   bool plane_stress,
                                                   double thickness,
+                                                  bool use_expanded_bdb,
+                                                  bool use_expanded_bdb_full,
                                                   const std::vector<double> &coordinates,
                                                   const std::vector<size_t> &connectivity,
                                                   const std::vector<double> &param_young,
@@ -153,6 +163,8 @@ struct Fem2d {
             solid_triangle,
             plane_stress,
             plane_stress ? thickness : 1.0,
+            use_expanded_bdb,
+            use_expanded_bdb_full,
             number_of_nodes,
             number_of_elements,
             total_ndof,

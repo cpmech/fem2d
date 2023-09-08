@@ -54,6 +54,8 @@ TEST_CASE("truss2d") {
         auto solid_triangle = false;
         auto plane_stress = false;
         auto thickness = 1.0;
+        auto use_expanded_bdb = false;
+        auto use_expanded_bdb_full = false;
         auto coordinates = vector<double>{0.0, 0.0, 10.0, 0.0, 10.0, 10.0};
         auto connectivity = vector<size_t>{0, 1, 1, 2, 2, 0};
         auto param_young = vector<double>{100.0, 50.0, 200.0};
@@ -72,6 +74,8 @@ TEST_CASE("truss2d") {
             auto truss = Fem2d::make_new(solid_triangle,
                                          plane_stress,
                                          thickness,
+                                         use_expanded_bdb,
+                                         use_expanded_bdb_full,
                                          coordinates,
                                          connectivity,
                                          param_young,
@@ -155,6 +159,8 @@ TEST_CASE("truss2d") {
             auto truss = Fem2d::make_new(solid_triangle,
                                          plane_stress,
                                          thickness,
+                                         use_expanded_bdb,
+                                         use_expanded_bdb_full,
                                          coordinates,
                                          connectivity,
                                          param_young,
@@ -250,6 +256,8 @@ TEST_CASE("truss2d") {
         auto solid_triangle = false;
         auto plane_stress = false;
         auto thickness = 1.0;
+        auto use_expanded_bdb = false;
+        auto use_expanded_bdb_full = false;
         auto coordinates = vector<double>{0.0, 0.0, 192.0, 0.0, 192.0, 144.0, 384.0, 0.0, 384.0, 144.0};
         auto connectivity = vector<size_t>{0, 2, 0, 1, 1, 2, 2, 4, 2, 3, 1, 4, 1, 3, 3, 4};
         auto param_young = vector<double>(8, 30000.0);
@@ -270,6 +278,8 @@ TEST_CASE("truss2d") {
         auto truss = Fem2d::make_new(solid_triangle,
                                      plane_stress,
                                      thickness,
+                                     use_expanded_bdb,
+                                     use_expanded_bdb_full,
                                      coordinates,
                                      connectivity,
                                      param_young,

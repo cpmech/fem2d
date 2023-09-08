@@ -50,6 +50,8 @@ TEST_CASE("solid2d") {
         auto solid_triangle = true;
         auto plane_stress = true;
         auto thickness = 0.25;
+        auto use_expanded_bdb = false;
+        auto use_expanded_bdb_full = false;
         auto coordinates = vector<double>{
             0.0, 0.0,  // 0
             0.0, 2.0,  // 1
@@ -82,6 +84,8 @@ TEST_CASE("solid2d") {
         auto fem = Fem2d::make_new(solid_triangle,
                                    plane_stress,
                                    thickness,
+                                   use_expanded_bdb,
+                                   use_expanded_bdb_full,
                                    coordinates,
                                    connectivity,
                                    param_young,
@@ -207,6 +211,8 @@ TEST_CASE("solid2d") {
         auto solid_triangle = true;
         auto plane_stress = false;
         auto thickness = 1.0;
+        auto use_expanded_bdb = false;
+        auto use_expanded_bdb_full = false;
         auto coordinates = vector<double>{
             0.0, 0.0,   // 0
             0.5, 0.0,   // 1
@@ -245,6 +251,8 @@ TEST_CASE("solid2d") {
         auto fem = Fem2d::make_new(solid_triangle,
                                    plane_stress,
                                    thickness,
+                                   use_expanded_bdb,
+                                   use_expanded_bdb_full,
                                    coordinates,
                                    connectivity,
                                    param_young,
