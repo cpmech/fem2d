@@ -4,8 +4,10 @@
 
 #include "laclib.h"
 
-std::unique_ptr<Matrix> linear_elasticity_modulus(double young, double poisson, bool plane_stress) {
-    auto dd = Matrix::make_new(4, 4);
+void linear_elasticity_modulus(std::unique_ptr<Matrix> &dd,
+                               double young,
+                               double poisson,
+                               bool plane_stress) {
     if (plane_stress) {
         double c = young / (1.0 - poisson * poisson);
         dd->set(0, 0, c);
@@ -26,5 +28,4 @@ std::unique_ptr<Matrix> linear_elasticity_modulus(double young, double poisson, 
         dd->set(2, 2, c * (1.0 - poisson));
         dd->set(3, 3, c * (1.0 - 2.0 * poisson)); // Mandel: multiply by 2, so 1/2 disappears
     }
-    return dd;
 }

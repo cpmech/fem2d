@@ -4,17 +4,15 @@
 #include <vector>
 
 #include "../util/doctest.h"
+#include "constants.h"
 #include "fem2d.h"
 #include "laclib.h"
 
 using namespace std;
 
-// sqrt(2) <https://oeis.org/A002193>
-#define SQRT_2 1.41421356237309504880168872420969807856967187537694807317667973799073247846210703885038753432764157
-
 #define _SUBCASE(name) if (false)
 
-TEST_CASE("fem2d") {
+TEST_CASE("truss2d") {
     SUBCASE("three-member truss") {
         // GEOMETRY
         //
@@ -53,9 +51,16 @@ TEST_CASE("fem2d") {
         // Carlos Felippa I-FEM Page 3-12 Chapter 3 The Direct Stiffness Method II
 
         // input data
+        auto solid_triangle = false;
+        auto plane_stress = false;
+        auto thickness = 1.0;
+        auto use_expanded_bdb = false;
+        auto use_expanded_bdb_full = false;
         auto coordinates = vector<double>{0.0, 0.0, 10.0, 0.0, 10.0, 10.0};
         auto connectivity = vector<size_t>{0, 1, 1, 2, 2, 0};
-        auto properties = vector<double>{100.0, 50.0, 200.0 * SQRT_2};
+        auto param_young = vector<double>{100.0, 50.0, 200.0};
+        auto param_poisson = vector<double>{};
+        auto param_cross_area = vector<double>{1.0, 1.0, SQRT_2};
         map<node_dof_pair_t, double> natural_bcs{
             {{2, AlongX}, 2.0},
             {{2, AlongY}, 1.0},
@@ -66,7 +71,18 @@ TEST_CASE("fem2d") {
             map<node_dof_pair_t, double> essential_bcs{};
 
             // allocate truss solver
-            auto truss = Fem2d::make_new(false, coordinates, connectivity, properties, essential_bcs, natural_bcs);
+            auto truss = Fem2d::make_new(solid_triangle,
+                                         plane_stress,
+                                         thickness,
+                                         use_expanded_bdb,
+                                         use_expanded_bdb_full,
+                                         coordinates,
+                                         connectivity,
+                                         param_young,
+                                         param_poisson,
+                                         param_cross_area,
+                                         essential_bcs,
+                                         natural_bcs);
 
             // check element stiffness
             truss->calculate_element_stiffness(0);
@@ -140,7 +156,18 @@ TEST_CASE("fem2d") {
                 {{1, AlongY}, 0.4}};
 
             // allocate truss solver
-            auto truss = Fem2d::make_new(false, coordinates, connectivity, properties, essential_bcs, natural_bcs);
+            auto truss = Fem2d::make_new(solid_triangle,
+                                         plane_stress,
+                                         thickness,
+                                         use_expanded_bdb,
+                                         use_expanded_bdb_full,
+                                         coordinates,
+                                         connectivity,
+                                         param_young,
+                                         param_poisson,
+                                         param_cross_area,
+                                         essential_bcs,
+                                         natural_bcs);
 
             // check boundary condition arrays
             auto correct_ep = vector<bool>{true, true, false, true, false, false};
@@ -226,9 +253,16 @@ TEST_CASE("fem2d") {
         // CEE 421L. Matrix Structural Analysis – Duke University – Fall 2014 – H.P. Gavin
 
         // input data
+        auto solid_triangle = false;
+        auto plane_stress = false;
+        auto thickness = 1.0;
+        auto use_expanded_bdb = false;
+        auto use_expanded_bdb_full = false;
         auto coordinates = vector<double>{0.0, 0.0, 192.0, 0.0, 192.0, 144.0, 384.0, 0.0, 384.0, 144.0};
         auto connectivity = vector<size_t>{0, 2, 0, 1, 1, 2, 2, 4, 2, 3, 1, 4, 1, 3, 3, 4};
-        auto properties = vector<double>(8, 30000.0 * 10.0);
+        auto param_young = vector<double>(8, 30000.0);
+        auto param_poisson = vector<double>{};
+        auto param_cross_area = vector<double>(8, 10.0);
         map<node_dof_pair_t, double> essential_bcs{
             {{0, AlongX}, 0.0},
             {{0, AlongY}, 0.0},
@@ -241,7 +275,18 @@ TEST_CASE("fem2d") {
         };
 
         // allocate truss solver
-        auto truss = Fem2d::make_new(false, coordinates, connectivity, properties, essential_bcs, natural_bcs);
+        auto truss = Fem2d::make_new(solid_triangle,
+                                     plane_stress,
+                                     thickness,
+                                     use_expanded_bdb,
+                                     use_expanded_bdb_full,
+                                     coordinates,
+                                     connectivity,
+                                     param_young,
+                                     param_poisson,
+                                     param_cross_area,
+                                     essential_bcs,
+                                     natural_bcs);
 
         // check boundary condition arrays
         auto correct_ep = vector<bool>{true, true, false, false, false, false, true, true, false, false};

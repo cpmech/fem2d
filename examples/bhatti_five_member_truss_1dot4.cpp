@@ -6,7 +6,7 @@
 using std::cout;
 using std::endl;
 
-int main(int argc, char **argv) {
+void run(int argc, char **argv) {
 
     // Bhatti's Example 1.4 on page 25
     //
@@ -45,6 +45,13 @@ int main(int argc, char **argv) {
     // Attribute 2: Area = 3,000; Young = 200,000
     // Attribute 3: Area = 2,000; Young =  70,000
 
+    // options
+    auto solid_triangle = false;
+    auto plane_stress = false;
+    auto thickness = 1.0;
+    auto use_expanded_bdb = true;
+    auto use_expanded_bdb_full = false;
+
     // nodes
     auto coordinates = vector<double>{
         0.0, 0.0,    // 0
@@ -60,11 +67,16 @@ int main(int argc, char **argv) {
         2, 3,  // 3
         1, 2}; // 4
 
-    // E*A
-    double mat1 = 200000.0 * 4000.0;
-    double mat2 = 200000.0 * 3000.0;
-    double mat3 = 70000.0 * 2000.0;
-    auto properties = vector<double>{mat1, mat1, mat2, mat2, mat3};
+    // parameters
+    double ee1 = 200000.0;
+    double ee2 = 200000.0;
+    double ee3 = 70000.0;
+    double aa1 = 4000.0;
+    double aa2 = 3000.0;
+    double aa3 = 2000.0;
+    auto param_young = vector<double>{ee1, ee1, ee2, ee2, ee3};
+    auto param_poisson = vector<double>{};
+    auto param_cross_area = vector<double>{aa1, aa1, aa2, aa2, aa3};
 
     // boundary conditions
     map<node_dof_pair_t, double> essential_bcs{
@@ -75,6 +87,22 @@ int main(int argc, char **argv) {
     map<node_dof_pair_t, double> natural_bcs{
         {{1, AlongY}, -150000}};
 
+    // get FEM solution
+    auto fem = Fem2d::make_new(solid_triangle,
+                               plane_stress,
+                               thickness,
+                               use_expanded_bdb,
+                               use_expanded_bdb_full,
+                               coordinates,
+                               connectivity,
+                               param_young,
+                               param_poisson,
+                               param_cross_area,
+                               essential_bcs,
+                               natural_bcs);
+    fem->solve();
+    print_vector("uu(bhatti_five_member_truss_1dot4)", fem->uu);
+
     // bhatti's solution
     auto correct_uu = vector<double>{
         0.000000000000000e00, 0.000000000000000e00,    // 0
@@ -82,17 +110,10 @@ int main(int argc, char **argv) {
         2.647036149579491e-01, -2.647036149579490e-01, // 2
         0.000000000000000e00, 0.000000000000000e00};   // 3
 
-    // solve
-    auto truss = Fem2d::make_new(false, coordinates, connectivity, properties, essential_bcs, natural_bcs);
-    truss->solve();
-    print_vector("uu", truss->uu);
-
     // check
-    if (equal_vectors_tol(truss->uu, correct_uu, 1e-15)) {
-        cout << "OK" << endl;
-        return 0;
-    } else {
-        cout << "FAIL" << endl;
-        return 1;
+    if (!equal_vectors_tol(fem->uu, correct_uu, 1e-15)) {
+        throw "bhatti_five_member_truss_1dot4 failed";
     }
 }
+
+MAIN_FUNCTION(run)
