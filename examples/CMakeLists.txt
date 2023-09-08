@@ -1,5 +1,8 @@
 set(EXAMPLES
-    bhatti_example_1dot4
+    bhatti_five_member_truss_1dot4
+    bhatti_plane_stress_1dot6
+    felippa_three_member_truss
+    smith_plane_strain_5dot2
 )
 
 foreach(var ${EXAMPLES})
