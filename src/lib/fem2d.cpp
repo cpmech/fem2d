@@ -49,9 +49,9 @@ void Fem2d::calculate_element_stiffness_solid_triangle(size_t e) {
     linear_elasticity_modulus(dd, param_young[e], param_poisson[e], plane_stress);
 
     // auxiliary data
-    size_t a = connectivity[e * 2];
-    size_t b = connectivity[e * 2 + 1];
-    size_t c = connectivity[e * 2 + 2];
+    size_t a = connectivity[e * 3];
+    size_t b = connectivity[e * 3 + 1];
+    size_t c = connectivity[e * 3 + 2];
     double x0 = coordinates[a * 2];
     double y0 = coordinates[a * 2 + 1];
     double x1 = coordinates[b * 2];
