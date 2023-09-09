@@ -1,0 +1,1 @@
+# Compares methods to compute transpose(B) D B
