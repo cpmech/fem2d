@@ -3,8 +3,7 @@
 #include "../src/libfem2d.h"
 #include "laclib.h"
 
-using std::cout;
-using std::endl;
+using namespace std;
 
 void run(int argc, char **argv) {
 

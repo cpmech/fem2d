@@ -1,0 +1,56 @@
+# GEOMETRY
+#
+#                      fy=1 ↑
+# ---                       2 →
+#  ↑                      ,'| fx=2
+#  |                    ,'  |
+#  |                  ,'    |
+#  |       EA=200√2 ,'      |
+# 10          (2) ,'        | EA=50
+#  |            ,'          | (1)
+#  |          ,'            |
+#  |        ,'              |
+#  |      ,'    EA=100      |
+#  ↓    ,'       (0)        |
+# ---  0--------------------1
+#     | |                  | |
+#      ⇊ uy=-0.5     uy=0.4 ⇈
+#
+#      |←------- 10 -------→|
+#
+ # BOUNDARY CONDITIONS
+#
+# node 0: x-fixed with a vertical displacement: uy = -0.5
+# node 1: x-fixed with a vertical displacement: uy = 0.4
+# node 2: fx = 2.0 and fy = 1.0
+#
+   # EXPECTED RESULTS
+           
+#
+	# << tab
+
+# kk * uu = ff
+#
+# correct_uu = {0.0, -0.5, 0.0, 0.4, -0.5, 0.2}
+# correct_ff = {-2.0, -2.0, 0.0, 1.0, 2.0, 1.0}
+#
+# Reference
+# Carlos Felippa I-FEM Page 3-12 Chapter 3 The Direct Stiffness Method II
+
+# header
+# ndim npoint ncell
+     2      3     3
+
+# points
+
+# id        x     y
+
+   0      0.0   0.0
+   1     10.0   0.0
+   2     10.0  10.0
+
+# cells
+# id att kind  point_ids...
+   0   1 lin2  0  1
+   1   1 lin2  1  2
+   2   1 lin2  2  0
