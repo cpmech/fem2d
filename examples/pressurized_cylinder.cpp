@@ -1,5 +1,6 @@
 #include <cmath>
 #include <iostream>
+#include <map>
 
 #include "../src/libfem2d.h"
 #include "laclib.h"

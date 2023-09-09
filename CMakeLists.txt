@@ -36,5 +36,4 @@ target_link_libraries(fem2d PUBLIC MKL::MKL ${LACLIB_LIBS})
 
 ### SUBDIRECTORIES ###########################################################
 
-add_subdirectory(src)
-add_subdirectory(examples)
+subdirs(benchmarks examples src)
