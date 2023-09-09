@@ -8,6 +8,7 @@
 const size_t MAX_LINE_WIDTH = 300;
 const size_t MAX_KIND_WIDTH = 24;
 
+/// @brief Checks if the line is a comment or empty
 bool comment_or_empty_line(wchar_t line[MAX_LINE_WIDTH]) {
     if (line[0] == L'#' || line[0] == L'\n') {
         return true; // comment or empty line found
@@ -25,7 +26,47 @@ bool comment_or_empty_line(wchar_t line[MAX_LINE_WIDTH]) {
     return false; // data?
 }
 
+/// @brief Reads a mesh description from a text file
+/// @note Important: The file must have less than 500 columns
 std::unique_ptr<CoordinatesAndConnectivity> read_mesh(const std::string &filename) {
+    // # File format
+    //
+    // The text file format includes three sections:
+    //
+    // 1. The header with the space dimension (`ndim`), number of points (`npoint`),
+    //    and number of cells (`ncell`);
+    // 2. The points list where each line contains the `id` of the point, which must be
+    //    **equal to the position** in the list, followed by the `x` and `y` coordinates;
+    // 3. The cells list where each line contains the `id` of the cell, which must be
+    //    **equal to the position** in the list, the attribute ID (`att`) of the cell,
+    //    the `kind` of the cell, followed by the IDs of the points that define
+    //     the cell (connectivity).
+    //
+    // The possible cell kinds are `lin2` and `tri3`
+    //
+    // The text file looks like this (the hash tag indicates a comment/the mesh
+    // below is just an example which won't work):
+    //
+    // ```text
+    // ## header
+    // ## ndim npoint ncell
+    //      2      8     5
+    //
+    // ## points
+    // ## id    x   y
+    //    0  0.0 0.0
+    //    1  0.5 0.0
+    //    2  1.0 0.0
+    // ## ... more points should follow
+    //
+    // ## cells
+    // ## id att kind  point_ids...
+    //    0   1 tri3  0 1 3
+    //    1   1 tri3  1 4 6
+    // ```
+    //
+    // Note that this function does not check for element compatibility
+    // as required by finite element analyses.
 
     setlocale(LC_ALL, "en_US.UTF-8"); // important to read UTF8 files
 
