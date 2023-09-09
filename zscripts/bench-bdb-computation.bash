@@ -12,11 +12,6 @@ bash all.bash ON
 cd /tmp/build-fem2d/benchmarks/bdb-computation
 
 # run benchmarks
-echo "### bdb_expanded #######################"
-./bdb_expanded
-
-echo "### bdb_expanded_full ##################"
-./bdb_expanded_full
-
-echo "### bdb_classical ######################"
-./bdb_classical
+./bmark_bdb "expanded"
+./bmark_bdb "expanded_full"
+./bmark_bdb "classical"
