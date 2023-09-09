@@ -18,14 +18,17 @@
 #
 #      |←------- 10 -------→|
 #
-# BOUNDARY CONDITIONS
+ # BOUNDARY CONDITIONS
 #
 # node 0: x-fixed with a vertical displacement: uy = -0.5
 # node 1: x-fixed with a vertical displacement: uy = 0.4
 # node 2: fx = 2.0 and fy = 1.0
 #
-# EXPECTED RESULTS
+   # EXPECTED RESULTS
+           
 #
+	# << tab
+
 # kk * uu = ff
 #
 # correct_uu = {0.0, -0.5, 0.0, 0.4, -0.5, 0.2}

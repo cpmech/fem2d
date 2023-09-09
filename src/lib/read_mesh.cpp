@@ -5,16 +5,24 @@
 
 #include "read_mesh.h"
 
-const size_t MAX_LINE_WIDTH = 500;
+const size_t MAX_LINE_WIDTH = 300;
 const size_t MAX_KIND_WIDTH = 24;
 
-size_t find_first_non_empty_character(size_t nmax, wchar_t line[]) {
-    for (size_t i = 0; i < nmax; i++) {
-        if (line[i] != L' ') {
-            return i;
+bool comment_or_empty_line(wchar_t line[MAX_LINE_WIDTH]) {
+    if (line[0] == L'#' || line[0] == L'\n') {
+        return true; // comment or empty line found
+    }
+    for (size_t i = 0; i < MAX_LINE_WIDTH; i++) {
+        if (line[i] != L' ' && line[i] != L'\t') {
+            // first character that is not a space
+            if (line[i] == L'#' || line[i] == L'\n') {
+                return true; // comment or empty line found
+            } else {
+                return false; // data
+            }
         }
     }
-    return nmax;
+    return false; // data?
 }
 
 std::unique_ptr<CoordinatesAndConnectivity> read_mesh(const std::string &filename) {
@@ -46,10 +54,9 @@ std::unique_ptr<CoordinatesAndConnectivity> read_mesh(const std::string &filenam
     size_t element_nnode;
 
     while (fgetws(line, MAX_LINE_WIDTH, f) != NULL) {
-        if (line[0] == L'#' || line[0] == L'\n') {
+        if (comment_or_empty_line(line)) {
             continue;
         }
-        // if (find_first_non_empty_character(line_max,line)==line_max)
 
         if (reading_header) {
 
