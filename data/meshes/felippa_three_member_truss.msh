@@ -36,10 +36,12 @@
 
 # header
 # ndim npoint ncell
-     2      9     8
+     2      3     3
 
 # points
+
 # id        x     y
+
    0      0.0   0.0
    1     10.0   0.0
    2     10.0  10.0
