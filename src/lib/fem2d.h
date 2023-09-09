@@ -7,8 +7,6 @@
 
 #include "laclib.h"
 
-using namespace std;
-
 /// @brief Defines the index of a local DOF (0 or 1)
 enum LocalDOF {
     AlongX = 0,
