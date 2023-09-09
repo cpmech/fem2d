@@ -25,7 +25,12 @@ include_directories(${LACLIB_INCS})
 
 ### library ##################################################################
 
-add_library(fem2d SHARED src/lib/fem2d.cpp)
+SET(LIB_SRC_FILES
+    src/lib/fem2d.cpp
+    src/lib/read_mesh.cpp
+)
+
+add_library(fem2d SHARED ${LIB_SRC_FILES})
 target_compile_definitions(fem2d PUBLIC USE_MKL)
 target_link_libraries(fem2d PUBLIC MKL::MKL ${LACLIB_LIBS})
 

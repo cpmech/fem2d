@@ -1,0 +1,68 @@
+# Smith IM, Griffiths DV, and Margetts L (2014) Programming the Finite
+# Element Method, Wiley, Fifth Edition, 664p
+#
+# TEST GOAL
+#
+# This test verifies a plane-strain simulation with Tri3 elements
+#
+# MESH
+#
+#               1.0 kN/m²
+#         ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+#  0.0  ▷0---------1---------2
+#         |       ,'|       ,'|   E = 1e6 kN/m²
+#         |  0  ,'  |  2  ,'  |   ν = 0.3
+#         |   ,'    |   ,'    |
+#         | ,'   1  | ,'  3   |   connectivity:
+# -0.5  ▷3'--------4'--------5     0 : 1 0 3
+#         |       ,'|       ,'|     1 : 3 4 1
+#         |  4  ,'  |  6  ,'  |     2 : 2 1 4
+#         |   ,'    |   ,'    |     3 : 4 5 2
+#         | ,'   5  | ,'   7  |     4 : 4 3 6
+# -1.0  ▷6'--------7'--------8     5 : 6 7 4
+#         △        △        △    6 : 5 4 7
+#                                   7 : 7 8 5
+#        0.0       0.5       1.0
+#
+# BOUNDARY CONDITIONS
+#
+# Fix left edge horizontally
+# Fix bottom edge vertically
+# Distributed load Qn = -1.0 on top edge
+#
+# CONFIGURATION AND PARAMETERS
+#
+# Static simulation
+# Young = 1e6
+# Poisson = 0.3
+# Plane-strain
+
+
+# header
+# ndim npoint ncell
+     2      9     8
+
+
+# points
+# id    x     y
+   0  0.0   0.0
+   1  0.5   0.0
+   2  1.0   0.0
+   3  0.0  -0.5
+   4  0.5  -0.5
+   5  1.0  -0.5
+   6  0.0  -1.0
+   7  0.5  -1.0
+   8  1.0  -1.0
+
+
+# cells
+# id att kind  point_ids...
+   0   1 tri3  1  0  3
+   1   1 tri3  3  4  1
+   2   1 tri3  2  1  4
+   3   1 tri3  4  5  2
+   4   1 tri3  4  3  6
+   5   1 tri3  6  7  4
+   6   1 tri3  5  4  7
+   7   1 tri3  7  8  5
